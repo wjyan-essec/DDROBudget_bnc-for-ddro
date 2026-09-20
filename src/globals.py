@@ -26,6 +26,8 @@ class Config:
         cplex_cuts,
         verbose_level,
         time_lim,
+        bound_time=0.0,
+        total_time_lim=None,
         interdiction_cuts=True,
         intersection_cuts=True,
         nogood_cuts=True,
@@ -47,6 +49,8 @@ class Config:
         self.cplex_cuts = cplex_cuts
         self.verbose = verbose_level
         self.time_lim = time_lim
+        self.bound_time = bound_time
+        self.total_time_lim = time_lim if total_time_lim is None else total_time_lim
         self.sub_time_lim = time_lim
         self.separation = separation
 

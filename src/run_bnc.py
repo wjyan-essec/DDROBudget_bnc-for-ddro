@@ -19,6 +19,49 @@ from bnc_problem_class import BnCProblem
 from globals import Config, Tracker
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_OUTPUT_CSV = REPOSITORY_ROOT / "results" / "summary.csv"
+
+
+def read_bound_time(instance_file):
+    """Read the preprocessing time recorded for a converted KP instance."""
+    instance_path = Path(instance_file).resolve()
+    manifest_path = instance_path.parent / "conversion_manifest.csv"
+    if not manifest_path.is_file():
+        return 0.0
+
+    with manifest_path.open(newline="", encoding="utf-8") as stream:
+        matches = [
+            row
+            for row in csv.DictReader(stream)
+            if row.get("mps_file") == instance_path.name
+        ]
+
+    if len(matches) != 1:
+        raise ValueError(
+            f"Expected exactly one entry for '{instance_path.name}' in "
+            f"{manifest_path}, found {len(matches)}."
+        )
+
+    bound_time = float(matches[0]["bound_time_seconds"])
+    if bound_time < 0:
+        raise ValueError(f"Bound time must be nonnegative, got {bound_time}.")
+    return bound_time
+
+
+def write_result_csv(output_csv, result):
+    """Append one solve result to a CSV file, creating its header if needed."""
+    output_path = Path(output_csv).resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not output_path.exists() or output_path.stat().st_size == 0
+    with output_path.open("a", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(result))
+        if write_header:
+            writer.writeheader()
+        writer.writerow(result)
+    return output_path
+
+
 def main():
     """Main function to run the Branch-and-Cut algorithm for the knapsack problem."""
     # Parse command line arguments
@@ -30,6 +73,10 @@ def main():
     # Determine cut types
     branchandbound, intersection_cuts, interdiction_cuts, no_good_cuts = determine_cut_types(args)
 
+    # Treat --time_lim as the total experiment budget, including bound computation.
+    bound_time = read_bound_time(args.instance_file)
+    model_time_limit = max(0.0, args.time_lim - bound_time)
+
     # Create the config
     config = Config(
         instance_type=args.instance_type,
@@ -37,11 +84,13 @@ def main():
         lower_level=args.lower_level,
         projected=bool(args.projected),
         separation=args.separation,
-        time_lim=args.time_lim,
+        time_lim=model_time_limit,
+        bound_time=bound_time,
+        total_time_lim=args.time_lim,
         verbose_level=args.verbose_level,
         max_cuts=args.max_cuts,
         only_root_node=bool(args.only_root_node),
-        cplex_cuts=bool(args.cplex_cuts),
+        cplex_cuts=args.cplex_cuts,
         tolerance=args.tolerance,
         write_lps=bool(args.write_lps),
         interdiction_cuts=interdiction_cuts,
@@ -57,7 +106,9 @@ def main():
     
     # Create and solve the BnC problem
     bnc_problem = BnCProblem(config, tracker)
-    bnc_problem.solve()
+    result = bnc_problem.solve()
+    output_path = write_result_csv(args.output_csv, result)
+    print(f"Result CSV: {output_path}")
 
 def parse_command_line_arguments():
     """Parse command line arguments for the BnC algorithm."""
@@ -107,7 +158,13 @@ def parse_command_line_arguments():
         "--time_lim",
         type=float,
         default=60.0,
-        help="Time limit for the solver in seconds (default: 60.0)",
+        help="Total time limit in seconds, including bound computation (default: 60.0)",
+    )
+    parser.add_argument(
+        "--output_csv",
+        type=str,
+        default=str(DEFAULT_OUTPUT_CSV),
+        help=f"CSV file to which the result is appended (default: {DEFAULT_OUTPUT_CSV})",
     )
     parser.add_argument(
         "--instance_type",
@@ -214,10 +271,13 @@ def print_parameter_information(args, config):
     v_print(1, "INFO-Logging: ON")
     v_print(2, "TIME_Logging: ON")
     v_print(3, "ERROR-Logging: ON")
-    print(f"Time limit: {args.time_lim} seconds")
+    print(f"Total time limit: {config.total_time_lim} seconds")
+    print(f"Bound time: {config.bound_time} seconds")
+    print(f"Model time limit: {config.time_lim} seconds")
     print(f"Maximum cuts per node: {args.max_cuts}")
     print(f"Only root node cuts: {bool(args.only_root_node)}")
-    print(f"CPLEX cuts: {bool(args.cplex_cuts+1)}")
+    print(f"CPLEX cut passes: {config.cplex_cuts}")
+    print(f"CPLEX automatic cut passes: {config.cplex_cuts == 0}")
     print(f"Tolerance: {args.tolerance}")
     print(f"Write LP files: {bool(args.write_lps)}")
     print(f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")

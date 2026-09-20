@@ -609,37 +609,66 @@ class BnCProblem:
         cpx.CPXcopyorder(g.env, g.m, cnt, indices, priority, direction)
 
     def print_solution(self):
-        """Print the solution of the model after optimization."""
-        # Get solution
-        solution = cpx.CPXgetx(g.env, g.m, 0, self.no_of_vars - 1)
+        """Print the available solution and return a CSV-ready result row."""
+        solver_status = cpx.CPXgetstat(g.env, g.m)
+        solution_count = cpx.CPXgetsolnpoolnumsolns(g.env, g.m)
+        has_incumbent = solution_count > 0
 
-        # Print solution with variable names
-        print("Solution:")
-        for i in range(self.p):
-            print(f"  xI_{i} = {solution[self.I[i]]}")
-        for i in range(self.q):
-            print(f"  xJ_{i} = {solution[self.J[i]]}")
-        for i in range(self.r):
-            r_idx = self.p + self.q + i
-            print(f"  y_{i} = {solution[r_idx]}")
-        print(f"  eta = {solution[self.eta_idx]}")
+        status_names = {
+            cpx.CPXMIP_OPTIMAL: "OPTIMAL",
+            cpx.CPXMIP_OPTIMAL_TOL: "OPTIMAL_TOL",
+            cpx.CPXMIP_INFEASIBLE: "INFEASIBLE",
+            cpx.CPXMIP_INForUNBD: "INFEASIBLE_OR_UNBOUNDED",
+            cpx.CPXMIP_UNBOUNDED: "UNBOUNDED",
+            cpx.CPXMIP_TIME_LIM_FEAS: "TIME_LIMIT_FEASIBLE",
+            cpx.CPXMIP_TIME_LIM_INFEAS: "TIME_LIMIT_NO_INCUMBENT",
+            cpx.CPXMIP_MEM_LIM_FEAS: "MEMORY_LIMIT_FEASIBLE",
+            cpx.CPXMIP_MEM_LIM_INFEAS: "MEMORY_LIMIT_NO_INCUMBENT",
+            cpx.CPXMIP_NODE_LIM_FEAS: "NODE_LIMIT_FEASIBLE",
+            cpx.CPXMIP_NODE_LIM_INFEAS: "NODE_LIMIT_NO_INCUMBENT",
+            cpx.CPXMIP_ABORT_FEAS: "ABORTED_FEASIBLE",
+            cpx.CPXMIP_ABORT_INFEAS: "ABORTED_NO_INCUMBENT",
+        }
+        status = status_names.get(solver_status, f"CPLEX_STATUS_{solver_status}")
 
-        if config.projected == False:
-            for i in range(self.q):
-                u_idx = self.n + i
-                print(f"  u_{i} = {solution[u_idx]}")
-            for i in range(self.q):
-                r_idx = self.n + self.p + i
-                print(f"  r_{i} = {solution[r_idx]}")
+        objective = float("nan")
+        gap = float("nan")
+        if has_incumbent:
+            objective = cpx.CPXgetobjval(g.env, g.m)
+            gap = cpx.CPXgetmiprelgap(g.env, g.m)
+            print(f"Objective value: {objective}")
 
-        if config.interdiction_cuts:
-            for k in range(min(self.p, self.q)):
-                z_idx = self.n + 1 + k
-                print(f"  z_{k} = {solution[z_idx]}")
+            if config.verbose > 0:
+                solution = cpx.CPXgetx(g.env, g.m, 0, self.no_of_vars - 1)
+                print("Solution:")
+                for i in range(self.p):
+                    print(f"  xI_{i} = {solution[self.I[i]]}")
+                for i in range(self.q):
+                    print(f"  xJ_{i} = {solution[self.J[i]]}")
+                for i in range(self.r):
+                    r_idx = self.p + self.q + i
+                    print(f"  y_{i} = {solution[r_idx]}")
+                print(f"  eta = {solution[self.eta_idx]}")
 
-        # Calculate objective value manually
-        obj_val = cpx.CPXgetobjval(g.env, g.m)
-        print(f"Objective value: {obj_val}")
+                if config.projected == False:
+                    for i in range(self.q):
+                        u_idx = self.n + i
+                        print(f"  u_{i} = {solution[u_idx]}")
+                    for i in range(self.q):
+                        r_idx = self.n + self.p + i
+                        print(f"  r_{i} = {solution[r_idx]}")
+
+                if config.interdiction_cuts:
+                    for k in range(min(self.p, self.q)):
+                        z_idx = self.n + 1 + k
+                        print(f"  z_{k} = {solution[z_idx]}")
+        else:
+            print("No incumbent solution was found.")
+
+        try:
+            best_bound = cpx.CPXgetbestobjval(g.env, g.m)
+        except RuntimeError:
+            best_bound = float("nan")
 
         # Print additional statistics
         if config.interdiction_cuts:
@@ -670,28 +699,30 @@ class BnCProblem:
         v_print(1, f"Cut Count per Node: {tracker.node_cut_count}")
         v_print(1, f"Initial Solution given to callback: {config.solution}")
         v_print(1, f"Violations of initial solution: {tracker.solution_violations}")
-        print(
-            "result ,",
-            os.path.splitext(config.instance_file.split("/")[-1])[0],
-            ",",
-            cuts,
-            ",",
-            len(self.b),
-            ",",
-            self.n_lower_level_constraints,
-            ",",
-            tracker.cut_count,
-            ",",
-            tracker.solving_time,
-            ",",
-            cpx.CPXgetnodecnt(g.env, g.m),
-            ",",
-            cpx.CPXgetobjval(g.env, g.m),
-            ",",
-            cpx.CPXgetmiprelgap(g.env, g.m),
-            ",",
-            cpx.CPXgetstat(g.env, g.m),
-        )
+        result = {
+            "problem": config.instance_type,
+            "instance": os.path.splitext(os.path.basename(config.instance_file))[0],
+            "formulation": "projected" if config.projected else "unprojected",
+            "method": cuts,
+            "status": status,
+            "solver_status": solver_status,
+            "has_incumbent": int(has_incumbent),
+            "incumbent": objective,
+            "bound": best_bound,
+            "gap": gap,
+            "solve_time": tracker.solving_time,
+            "bound_time": config.bound_time,
+            "model_time_limit": config.time_lim,
+            "total_time": tracker.solving_time + config.bound_time,
+            "nodes_e": cpx.CPXgetnodecnt(g.env, g.m),
+            "cut_num": tracker.cut_count,
+            "cut_time": tracker.callback_time,
+            "callback_count": tracker.callback_count,
+            "cone_coefficient_time": tracker.cone_coefficient_time,
+            "lower_level_constraints": self.n_lower_level_constraints,
+        }
+        print("result ,", ",".join(str(value) for value in result.values()))
+        return result
 
     def solve(self):
         """Solve the knapsack problem."""
@@ -706,24 +737,22 @@ class BnCProblem:
             # Solve problem
             tracker.start_elapsed_time = cpx.CPXgettime(g.env)
 
+            first_time = cpx.CPXgettime(g.env)
             try:
-                first_time = cpx.CPXgettime(g.env)
                 cpx.CPXmipopt(g.env, g.m)
+            finally:
                 tracker.solving_time = cpx.CPXgettime(g.env) - first_time
-            except CplexError as e:
-                print(f"Error optimizing model: {e}")
 
             # Print solution
-            self.print_solution()
+            return self.print_solution()
 
-            # Free model
-            cpx.CPXfreeprob(g.env, g.m)
-            # Free environment
-            cpx.CPXcloseCPLEX(g.env)
-
-        except CplexError as e:
+        except (CplexError, RuntimeError) as e:
             print(f"Error solving model: {e}")
             raise
+        finally:
+            # Always release the CPLEX resources, including error paths.
+            cpx.CPXfreeprob(g.env, g.m)
+            cpx.CPXcloseCPLEX(g.env)
 
 
 #############################################
@@ -777,7 +806,8 @@ class CutCallback(cpx.CutCallback):
             v_print(1, "Python callback called from event " + str(self.wherefrom))
 
             # Check time limit
-            self.check_time_limit()
+            if self.check_time_limit():
+                return cpx.CPX_CALLBACK_DEFAULT
 
             # Get node's problem
             self.lp = cpx.CPXgetcallbacknodelp(g.env, self.cbdata, self.wherefrom)
@@ -830,12 +860,13 @@ class CutCallback(cpx.CutCallback):
         return cpx.CPX_CALLBACK_SET
 
     def check_time_limit(self):
-        """Check if elapsed time has exceeded the time limit and stop the callback if it has."""
-        if self.el_time > self.tilim:
+        """Return whether the main model has exhausted its time limit."""
+        if self.el_time >= self.tilim:
             print(
                 f"Elapsed time {self.el_time} exceeded time limit {self.tilim}. Stopping callback."
             )
-            return cpx.CPX_CALLBACK_FAIL
+            return True
+        return False
 
     def check_number_of_cuts(self):
         """Check if the current node has already received the maximum number of cuts."""
@@ -1002,11 +1033,13 @@ class CutCallback(cpx.CutCallback):
                 ["lower_capacity"],
             )
         try:
-            config.sub_time_lim = cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM) - (
-                cpx.CPXgettime(g.env) - tracker.start_elapsed_time
+            config.sub_time_lim = max(
+                0.0,
+                cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM)
+                - (cpx.CPXgettime(g.env) - tracker.start_elapsed_time),
             )
             config.set_cplex_parameters(self.sub_env)
-        except CplexError as e:
+        except (CplexError, RuntimeError) as e:
             v_print(3, f"Error setting subproblem time limit: {e}")
 
         if config.write_lps:
@@ -1736,7 +1769,8 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
         v_print(2, f"Elapsed time since optimization start: {self.el_time:.4f}s")
         self.tilim = cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM)
 
-        self.check_time_limit()
+        if self.check_time_limit():
+            return cpx.CPX_CALLBACK_DEFAULT
 
         # Get Node's Problem
         self.lp = cpx.CPXgetcallbacknodelp(g.env, self.cbdata, self.wherefrom)
@@ -1769,12 +1803,13 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
         return cpx.CPX_CALLBACK_SET
 
     def check_time_limit(self):
-        """Check if the elapsed time has exceeded the time limit."""
-        if self.el_time > self.tilim:
+        """Return whether the main model has exhausted its time limit."""
+        if self.el_time >= self.tilim:
             print(
                 f"Elapsed time {self.el_time} exceeded time limit {self.tilim}. Stopping callback."
             )
-            return cpx.CPX_CALLBACK_FAIL
+            return True
+        return False
 
     def check_feasibility(self):
         """Check the feasibility of the current solution with respect to the upper-level constraints."""
@@ -1889,8 +1924,10 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
                 ["lower_capacity"],
             )
 
-        config.sub_time_lim = cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM) - (
-            cpx.CPXgettime(g.env) - tracker.start_elapsed_time
+        config.sub_time_lim = max(
+            0.0,
+            cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM)
+            - (cpx.CPXgettime(g.env) - tracker.start_elapsed_time),
         )
         config.set_cplex_parameters(self.sub_env)
 
