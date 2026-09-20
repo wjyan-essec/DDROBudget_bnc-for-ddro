@@ -15,7 +15,7 @@ import csv
 from pathlib import Path
 
 # Local imports
-from bnc_problem_class import BnCProblem
+from bnc_problem_class import BnCProblem, RESULT_FIELDS
 from globals import Config, Tracker
 
 
@@ -23,12 +23,22 @@ REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT_CSV = REPOSITORY_ROOT / "results" / "summary.csv"
 
 
-def read_bound_time(instance_file):
-    """Read the preprocessing time recorded for a converted KP instance."""
+def read_instance_metadata(instance_file):
+    """Read metadata recorded for a converted KP instance."""
     instance_path = Path(instance_file).resolve()
     manifest_path = instance_path.parent / "conversion_manifest.csv"
     if not manifest_path.is_file():
-        return 0.0
+        return {
+            "problem": "",
+            "formulation": "",
+            "linearcons": "",
+            "n": "",
+            "density": "",
+            "replicate": "",
+            "objective_scale": 1.0,
+            "objective_multiplier": 1.0,
+            "bound_time": 0.0,
+        }
 
     with manifest_path.open(newline="", encoding="utf-8") as stream:
         matches = [
@@ -43,10 +53,44 @@ def read_bound_time(instance_file):
             f"{manifest_path}, found {len(matches)}."
         )
 
-    bound_time = float(matches[0]["bound_time_seconds"])
+    row = matches[0]
+    bound_time = float(row["bound_time_seconds"])
     if bound_time < 0:
         raise ValueError(f"Bound time must be nonnegative, got {bound_time}.")
-    return bound_time
+
+    objective_scale = float(row.get("objective_scale") or row.get("scale") or 1.0)
+    if objective_scale <= 0:
+        raise ValueError(
+            f"Objective scale must be positive, got {objective_scale}."
+        )
+    objective_multiplier = float(
+        row.get("objective_multiplier") or (-1.0 / objective_scale)
+    )
+    return {
+        "problem": row.get("problem") or "KP",
+        "formulation": row.get("formulation") or "DDRO_BI",
+        "linearcons": row.get("linearcons") or "D",
+        "n": row.get("n", ""),
+        "density": row.get("density", ""),
+        "replicate": row.get("replicate", ""),
+        "objective_scale": objective_scale,
+        "objective_multiplier": objective_multiplier,
+        "bound_time": bound_time,
+    }
+
+
+def validate_output_csv(output_csv):
+    """Reject appending the new result schema to a legacy CSV file."""
+    output_path = Path(output_csv).resolve()
+    if not output_path.exists() or output_path.stat().st_size == 0:
+        return
+    with output_path.open(newline="", encoding="utf-8") as stream:
+        existing_header = next(csv.reader(stream), [])
+    if existing_header != list(RESULT_FIELDS):
+        raise ValueError(
+            f"Existing result CSV has an incompatible header: {output_path}. "
+            "Use a new --output_csv path or move the old file before running."
+        )
 
 
 def write_result_csv(output_csv, result):
@@ -55,7 +99,7 @@ def write_result_csv(output_csv, result):
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_header = not output_path.exists() or output_path.stat().st_size == 0
     with output_path.open("a", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(result))
+        writer = csv.DictWriter(stream, fieldnames=RESULT_FIELDS)
         if write_header:
             writer.writeheader()
         writer.writerow(result)
@@ -74,7 +118,8 @@ def main():
     branchandbound, intersection_cuts, interdiction_cuts, no_good_cuts = determine_cut_types(args)
 
     # Treat --time_lim as the total experiment budget, including bound computation.
-    bound_time = read_bound_time(args.instance_file)
+    instance_metadata = read_instance_metadata(args.instance_file)
+    bound_time = instance_metadata["bound_time"]
     model_time_limit = max(0.0, args.time_lim - bound_time)
 
     # Create the config
@@ -87,6 +132,7 @@ def main():
         time_lim=model_time_limit,
         bound_time=bound_time,
         total_time_lim=args.time_lim,
+        instance_metadata=instance_metadata,
         verbose_level=args.verbose_level,
         max_cuts=args.max_cuts,
         only_root_node=bool(args.only_root_node),
@@ -100,6 +146,9 @@ def main():
     )
     # Create the tracker
     tracker = Tracker()
+
+    # Detect legacy/incompatible CSV schemas before starting an expensive solve.
+    validate_output_csv(args.output_csv)
     
     # Print parameter information
     print_parameter_information(args, config)

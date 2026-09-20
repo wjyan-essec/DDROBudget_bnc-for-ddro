@@ -24,6 +24,39 @@ from ddro_parser import *
 from python_to_cplex_c_api import cplex_c_api_wrapper as cpx
 
 
+RESULT_FIELDS = (
+    "problem",
+    "instance",
+    "n",
+    "density",
+    "replicate",
+    "formulation",
+    "linearcons",
+    "method",
+    "projected",
+    "status",
+    "solver_status",
+    "has_incumbent",
+    "incumbent",
+    "bound",
+    "gap",
+    "gap_percent",
+    "solve_time",
+    "bound_time",
+    "model_time_limit",
+    "total_time",
+    "nodes_e",
+    "cut_num",
+    "cut_time",
+    "callback_count",
+    "cone_coefficient_time",
+    "lower_level_constraints",
+    "objective_scale",
+    "raw_incumbent",
+    "raw_bound",
+)
+
+
 class BnCProblem:
     """
     Base class for solving DDRO problems with BnC.
@@ -672,25 +705,13 @@ class BnCProblem:
 
         # Print additional statistics
         if config.interdiction_cuts:
-            cuts = "interdiction"
+            method = "interdiction"
         elif config.no_good_cuts:
-            cuts = "no-good"
-            if config.projected:
-                cuts += "-projected"
-            else:
-                cuts += "-unprojected"
+            method = "no-good"
         elif config.intersection_cuts:
-            cuts = "intersection"
-            if config.projected:
-                cuts += "-projected"
-            else:
-                cuts += "-unprojected"
+            method = "intersection"
         else:
-            cuts = "branchandbound"
-            if config.projected:
-                cuts += "-projected"
-            else:
-                cuts += "-unprojected"
+            method = "branchandbound"
 
         average_cut_count = (
             np.mean(tracker.node_cut_count) if tracker.node_cut_count else 0
@@ -699,17 +720,30 @@ class BnCProblem:
         v_print(1, f"Cut Count per Node: {tracker.node_cut_count}")
         v_print(1, f"Initial Solution given to callback: {config.solution}")
         v_print(1, f"Violations of initial solution: {tracker.solution_violations}")
+        metadata = config.instance_metadata
+        objective_multiplier = metadata.get("objective_multiplier", 1.0)
+        raw_incumbent = objective
+        raw_bound = best_bound
+        recovered_incumbent = raw_incumbent * objective_multiplier
+        recovered_bound = raw_bound * objective_multiplier
         result = {
-            "problem": config.instance_type,
+            "problem": metadata.get("problem") or config.instance_type,
             "instance": os.path.splitext(os.path.basename(config.instance_file))[0],
-            "formulation": "projected" if config.projected else "unprojected",
-            "method": cuts,
+            "n": metadata.get("n", ""),
+            "density": metadata.get("density", ""),
+            "replicate": metadata.get("replicate", ""),
+            "formulation": metadata.get("formulation")
+            or ("projected" if config.projected else "unprojected"),
+            "linearcons": metadata.get("linearcons", ""),
+            "method": method,
+            "projected": int(config.projected),
             "status": status,
             "solver_status": solver_status,
             "has_incumbent": int(has_incumbent),
-            "incumbent": objective,
-            "bound": best_bound,
+            "incumbent": recovered_incumbent,
+            "bound": recovered_bound,
             "gap": gap,
+            "gap_percent": gap * 100.0,
             "solve_time": tracker.solving_time,
             "bound_time": config.bound_time,
             "model_time_limit": config.time_lim,
@@ -720,6 +754,9 @@ class BnCProblem:
             "callback_count": tracker.callback_count,
             "cone_coefficient_time": tracker.cone_coefficient_time,
             "lower_level_constraints": self.n_lower_level_constraints,
+            "objective_scale": metadata.get("objective_scale", 1.0),
+            "raw_incumbent": raw_incumbent,
+            "raw_bound": raw_bound,
         }
         print("result ,", ",".join(str(value) for value in result.values()))
         return result

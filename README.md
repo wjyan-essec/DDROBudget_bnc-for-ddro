@@ -41,3 +41,5 @@ All parameters defined in `src/run_bnc.py` are forwarded by `run_bnc.sh`. The pa
 Notes:
 - For BOBILib instances, ensure the instance appears in `instances/bobilib/solvable-instances.csv`. If not, there exists no known solution to the instance.
 - If the instance directory contains `conversion_manifest.csv`, the runner reads the matching `bound_time_seconds`, subtracts it from `--time_lim`, and reports both the model and total times in the result CSV. If no manifest is present, the bound time is zero.
+- For converted disaggregated KP instances, `incumbent` and `bound` are reported in the original KP maximization scale. The BOBILib minimization values remain available as `raw_incumbent` and `raw_bound`; `objective_scale` records the conversion scale, and `gap_percent` is `100 * gap`.
+- The runner checks an existing result CSV header before solving. After a result-schema change, use a new `--output_csv` path (or move the old CSV) instead of appending incompatible rows.

@@ -28,6 +28,7 @@ class Config:
         time_lim,
         bound_time=0.0,
         total_time_lim=None,
+        instance_metadata=None,
         interdiction_cuts=True,
         intersection_cuts=True,
         nogood_cuts=True,
@@ -51,6 +52,7 @@ class Config:
         self.time_lim = time_lim
         self.bound_time = bound_time
         self.total_time_lim = time_lim if total_time_lim is None else total_time_lim
+        self.instance_metadata = {} if instance_metadata is None else instance_metadata
         self.sub_time_lim = time_lim
         self.separation = separation
 
