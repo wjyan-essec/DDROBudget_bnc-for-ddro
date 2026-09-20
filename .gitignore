@@ -113,3 +113,12 @@ tags
 # Editor swaps
 *.swp
 *.swo
+
+# Windows Python extensions
+*.pyd
+
+# Experiment outputs
+results/
+
+# Generated Cython source
+src/python_to_cplex_c_api/cplex_c_api_wrapper.c
