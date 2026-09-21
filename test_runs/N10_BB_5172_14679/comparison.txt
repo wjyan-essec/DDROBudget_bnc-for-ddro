@@ -1,0 +1,11 @@
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_1 reference=27.29 incumbent=27.29 bound=27.29 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_2 reference=40.17 incumbent=40.17 bound=40.17 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_3 reference=53.12 incumbent=53.120000000000005 bound=53.120000000000005 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_4 reference=23.11 incumbent=23.11 bound=23.11 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_5 reference=31.27 incumbent=31.27 bound=31.27 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_6 reference=40.39 incumbent=40.39 bound=40.39 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_7 reference=25.59 incumbent=25.59 bound=25.59 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_8 reference=15.87 incumbent=15.870000000000001 bound=15.870000000000001 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_9 reference=26.62 incumbent=26.62 bound=26.62 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_10 reference=20.31 incumbent=20.31 bound=20.31 status=OPTIMAL check=MATCH
+completed_rows=10/10

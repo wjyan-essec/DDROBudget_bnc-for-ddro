@@ -1,0 +1,2 @@
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_1 branchandbound reference=27.29 incumbent=27.29 bound=27.29 status=OPTIMAL check=MATCH
+N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_1 intersection reference=27.29 incumbent=31.39 bound=35.0 status=TIME_LIMIT_FEASIBLE check=INVALID_HIGH
