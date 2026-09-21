@@ -7,7 +7,7 @@ rem           test_n10_windows.bat all 120
 rem Set PYTHON_EXE beforehand to override the Python interpreter.
 
 set "ROOT=%~dp0"
-set "INPUT_DIR=%ROOT%instances\originalKP\N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005"
+set "INSTANCE_DIR=%ROOT%instances\kp_disaggregated_bobilib_n10"
 set "STEM=N10_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_r_10_100_"
 set "REPLICATE=%~1"
 if "%REPLICATE%"=="" set "REPLICATE=1"
@@ -22,13 +22,13 @@ if not defined PYTHON_EXE (
     )
 )
 
-if not exist "%INPUT_DIR%\%STEM%1.txt" (
-    echo N10 input files were not found in "%INPUT_DIR%".
+if not exist "%INSTANCE_DIR%\conversion_manifest.csv" (
+    echo N10 conversion manifest was not found in "%INSTANCE_DIR%".
     exit /b 1
 )
 
 if /I not "%REPLICATE%"=="all" (
-    if not exist "%INPUT_DIR%\%STEM%%REPLICATE%.txt" (
+    if not exist "%INSTANCE_DIR%\%STEM%%REPLICATE%.mps" (
         echo Invalid replicate "%REPLICATE%". Use 1-10 or all.
         exit /b 1
     )
@@ -49,21 +49,8 @@ if exist "%RUN_DIR%" (
 mkdir "%RUN_DIR%"
 if errorlevel 1 exit /b 1
 
-rem N10 SOURCE values end in .txt, while the converter expects r_10_100_k.
-rem Normalize copies in the test directory; never change the original inputs.
-"%PYTHON_EXE%" -c "from pathlib import Path; import re; src=Path(r'%INPUT_DIR%'); dst=Path(r'%RUN_DIR%\normalized'); dst.mkdir(); [(dst / p.name).write_text(re.sub(r'(?m)^(SOURCE[ \t]+\S+?)\.txt[ \t]*$', r'\1', p.read_text(encoding='utf-8')), encoding='utf-8') for p in sorted(src.glob('*.txt'))]"
-if errorlevel 1 (
-    echo Failed to prepare N10 input copies. Test directory: "%RUN_DIR%".
-    exit /b 1
-)
-
-"%PYTHON_EXE%" "%ROOT%src\convert_kp_to_bobilib.py" --input-root "%RUN_DIR%\normalized" --output-dir "%RUN_DIR%\converted" --sizes 10 --densities 100 --expected-count 10 --scale 100 >"%RUN_DIR%\conversion.log" 2>&1
-if errorlevel 1 (
-    echo Conversion failed. See "%RUN_DIR%\conversion.log".
-    exit /b 1
-)
-
 echo N10 test directory: "%RUN_DIR%"
+echo N10 instances: "%INSTANCE_DIR%"
 echo Time limit per solve: %TIME_LIMIT% seconds
 pushd "%RUN_DIR%"
 if errorlevel 1 exit /b 1
@@ -90,7 +77,15 @@ echo Comparison: "%RUN_DIR%\comparison.txt"
 exit /b 0
 
 :solve_one
-set "INSTANCE=%RUN_DIR%\converted\%STEM%%~1.mps"
+set "INSTANCE=%INSTANCE_DIR%\%STEM%%~1.mps"
+if not exist "%INSTANCE%" (
+    echo N10 MPS file was not found: "%INSTANCE%".
+    exit /b 1
+)
+if not exist "%INSTANCE_DIR%\%STEM%%~1.aux" (
+    echo N10 AUX file was not found for replicate %~1.
+    exit /b 1
+)
 for %%M in (branchandbound intersection) do (
     echo Running N10 replicate %~1 with %%M...
     "%PYTHON_EXE%" "%ROOT%src\run_bnc.py" --instance_file "%INSTANCE%" --instance_type bobilib --lower_level general --cuts %%M --projected 1 --separation integer --time_lim %TIME_LIMIT% --verbose_level 0 --output_csv "%RUN_DIR%\summary.csv" >"%RUN_DIR%\%STEM%%~1_%%M.log" 2>&1

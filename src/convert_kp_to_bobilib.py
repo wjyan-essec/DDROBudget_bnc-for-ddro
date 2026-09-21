@@ -165,7 +165,7 @@ def parse_kp_instance(path: Path) -> KPInstance:
     lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     name = " ".join(_tokens_for_key(lines, "NAME"))
     size = _integer(_tokens_for_key(lines, "NUM_ITEMS")[0], "NUM_ITEMS")
-    source = _tokens_for_key(lines, "SOURCE")[0]
+    source = _tokens_for_key(lines, "SOURCE")[0].removesuffix(".txt")
     source_match = re.fullmatch(r"(?:jeu|r)_(\d+)_(\d+)_(\d+)", source)
     if source_match is None:
         raise ValueError(f"Cannot extract size/density/replicate from SOURCE {source!r}")
