@@ -1807,7 +1807,8 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
         self.tilim = cpx.CPXgetdblparam(g.env, cpx.CPX_PARAM_TILIM)
 
         if self.check_time_limit():
-            return cpx.CPX_CALLBACK_DEFAULT
+            self.isfeas = False
+            return cpx.CPX_CALLBACK_SET
 
         # Get Node's Problem
         self.lp = cpx.CPXgetcallbacknodelp(g.env, self.cbdata, self.wherefrom)
