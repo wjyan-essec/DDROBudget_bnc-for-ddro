@@ -1823,10 +1823,15 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
 
         global obj_val
         v_print(1, f"Subproblem printed to LP file {tracker.callback_count} for inspection.")
-        if config.branchandbound:
-            self.u_hat, obj_val = self.solve_subproblem()
+        self.u_hat, obj_val, sub_status = self.solve_subproblem()
 
-        if not self.check_feasibility():
+        if sub_status != cpx.CPXMIP_OPTIMAL:
+            v_print(
+                1,
+                f"Subproblem status {sub_status} is not optimal; rejecting incumbent candidate.",
+            )
+            self.isfeas = False
+        elif not self.check_feasibility():
             self.isfeas = False
         else:
             self.isfeas = True
@@ -1978,7 +1983,7 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
             )
 
     def solve_subproblem(self):
-        """Solve the subproblem using CPLEX and return the solution u_hat and the objective value."""
+        """Solve the subproblem and return its solution, objective, and status."""
         v_print(1, "\n********* Solving subproblem *********\n")
 
         self.initialize_subproblem()
@@ -1986,19 +1991,27 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
         subproblem_start = time.time()
         cpx.CPXmipopt(self.sub_env, self.sub_m)
         subproblem_time = time.time() - subproblem_start
+        sub_status = cpx.CPXgetstat(self.sub_env, self.sub_m)
 
         v_print(1, "Subproblem solved.")
-        try:
-            u_hat = cpx.CPXgetx(self.sub_env, self.sub_m, 0, self.q + self.r - 1)
-            v_print(1, f"Subproblem solution (u_hat): {u_hat}")
-            # Compute objective value manually from solution
-            obj_val = sum(self.obj_coeffs[i] * u_hat[i] for i in range(self.q + self.r))
-            if config.instance_type == "bobilib":
-                obj_val = obj_val
-            v_print(1, f"Subproblem objective coefficients: {self.obj_coeffs}")
-            v_print(1, f"Subproblem objective value: {obj_val}\n")
-        except Exception as e:
-            v_print(3, f"Error retrieving subproblem solution: {e}")
+        u_hat = None
+        obj_val = None
+        if sub_status == cpx.CPXMIP_OPTIMAL:
+            try:
+                u_hat = cpx.CPXgetx(
+                    self.sub_env, self.sub_m, 0, self.q + self.r - 1
+                )
+                v_print(1, f"Subproblem solution (u_hat): {u_hat}")
+                # Compute objective value manually from solution
+                obj_val = sum(
+                    self.obj_coeffs[i] * u_hat[i]
+                    for i in range(self.q + self.r)
+                )
+                v_print(1, f"Subproblem objective coefficients: {self.obj_coeffs}")
+                v_print(1, f"Subproblem objective value: {obj_val}\n")
+            except Exception as e:
+                sub_status = None
+                v_print(3, f"Error retrieving subproblem solution: {e}")
 
         # Free model
         cpx.CPXfreeprob(self.sub_env, self.sub_m)
@@ -2008,4 +2021,4 @@ class MyIncumbentCallback(cpx.IncumbentCallback):
 
         v_print(2, f"Subproblem solve time: {subproblem_time:.4f}s")
 
-        return u_hat, obj_val
+        return u_hat, obj_val, sub_status
