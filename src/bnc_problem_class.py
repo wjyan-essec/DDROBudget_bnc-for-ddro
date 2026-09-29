@@ -140,6 +140,9 @@ class BnCProblem:
         # Metadata
         self.n_lower_level_constraints = problem_data["n_lower_level_constraints"]
         self.instance_file = problem_data["instance_file"]
+        self.var_names = problem_data.get("var_names", [])
+        self.ul_var_names = problem_data.get("ul_var_names", [])
+        self.ll_var_names = problem_data.get("ll_var_names", [])
 
     def create_empty_model(self):
         """Create an empty CPLEX model."""
@@ -758,7 +761,12 @@ class BnCProblem:
             "raw_incumbent": raw_incumbent,
             "raw_bound": raw_bound,
         }
+        result = self.finalize_result(result)
         print("result ,", ",".join(str(value) for value in result.values()))
+        return result
+
+    def finalize_result(self, result):
+        """Allow application-specific copies to validate and extend a result."""
         return result
 
     def solve(self):

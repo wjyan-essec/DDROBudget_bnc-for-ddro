@@ -38,6 +38,7 @@ def read_instance_metadata(instance_file):
             "objective_scale": 1.0,
             "objective_multiplier": 1.0,
             "bound_time": 0.0,
+            "source_file": "",
         }
 
     with manifest_path.open(newline="", encoding="utf-8") as stream:
@@ -76,6 +77,7 @@ def read_instance_metadata(instance_file):
         "objective_scale": objective_scale,
         "objective_multiplier": objective_multiplier,
         "bound_time": bound_time,
+        "source_file": row.get("source_file", ""),
     }
 
 

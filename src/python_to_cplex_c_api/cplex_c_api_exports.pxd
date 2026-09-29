@@ -74,6 +74,7 @@ cdef extern from "cplex.h":
     # Lazy Constraint Callbacks
     int CPXsetlazyconstraintcallbackfunc(CPXENVptr env, LazyCallbackCFunc lazyconcallback, void* cbhandle)
     int CPXgetcallbacknodelp (CPXCENVptr env, void *cbdata, int wherefrom, CPXLPptr *nodelp_p)
+    int CPXgetcallbacknodex(CPXCENVptr env, void *cbdata, int wherefrom, double *x, int begin, int end)
     int CPXcutcallbackadd( CPXCENVptr env, void * cbdata, int wherefrom, int nzcnt, double rhs, int sense, const int * cutind, const double* cutval, int purgeable )
     int CPXcutcallbackaddlocal( CPXCENVptr env, void * cbdata, int wherefrom, int nzcnt, double rhs, int sense, const int * cutind, const double * cutval )
     

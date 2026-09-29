@@ -39,6 +39,7 @@ class Config:
         lower_level="",
         separation="integer",
         solution=None,
+        tsp_source_file=None,
     ):
         """Initialize the configuration with given parameters."""
 
@@ -73,6 +74,7 @@ class Config:
 
         # Solution parameter
         self.solution = solution
+        self.tsp_source_file = tsp_source_file
 
     def _create_v_print(self):
         """Create a verbose print function based on the verbosity level."""
@@ -146,6 +148,12 @@ class Tracker:
 
         # Callback tracking
         self.callback_count = 0
+
+        # TSP connectivity separation is a mandatory feasibility mechanism,
+        # so its accounting is kept separate from optional DDRO cuts.
+        self.connectivity_callback_count = 0
+        self.connectivity_cut_count = 0
+        self.connectivity_time = 0.0
 
         # Subproblem tracking
         self.sub_count = 0

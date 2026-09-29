@@ -418,6 +418,18 @@ cdef int cut_callback_bridge(cplex.CPXCENVptr xenv, void *cbdata, int wherefrom,
 def CPXsetlazyconstraintcallbackfunc(Env env, CutCallback cb):
     CALL_CPLEX(cplex.CPXsetlazyconstraintcallbackfunc(env.impl, cut_callback_bridge, <void*>cb))
 
+def CPXgetcallbacknodex(Env env, VoidPointer cbdata, int wherefrom, int begin, int end):
+    result = ArrayOfDouble(end - begin + 1)
+    CALL_CPLEX(cplex.CPXgetcallbacknodex(
+        env.impl,
+        cbdata.impl,
+        wherefrom,
+        result.impl,
+        begin,
+        end
+    ))
+    return result.to_list()
+
 def CPXcutcallbackadd(Env env, VoidPointer cbdata, int wherefrom, int nzcnt, double rhs, sense, cutind, cutval, int purgeable):
     CALL_CPLEX(cplex.CPXcutcallbackadd(env.impl,
                                        cbdata.impl,

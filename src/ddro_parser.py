@@ -136,7 +136,13 @@ class MPSAUXParser(Parser):
             "ub": self.ub,
             "n_lower_level_constraints": self.n_lower_level_constraints,
             "instance_file": self.instance_file,
-            "bilinearities": False
+            "bilinearities": False,
+            # Preserve the source names so application-specific adapters can
+            # map semantic variables (for example, TSP edges) to master
+            # columns without relying on a fragile positional convention.
+            "var_names": self.var_names,
+            "ul_var_names": list(instance_data.ul_vars),
+            "ll_var_names": list(instance_data.ll_vars),
         }
         return problem_data
 
