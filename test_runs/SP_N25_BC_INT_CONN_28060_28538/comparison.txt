@@ -1,0 +1,21 @@
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID01 reference=696.34 incumbent=nan bound=430.85 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID02 reference=738.74 incumbent=nan bound=374.40500000000003 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID03 reference=789.21 incumbent=nan bound=463.24 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID04 reference=674.59 incumbent=nan bound=406.5 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID05 reference=610.31 incumbent=nan bound=412.24 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID06 reference=751.7 incumbent=nan bound=450.28000000000003 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID07 reference=653.27 incumbent=nan bound=396.33500000000004 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID08 reference=692.37 incumbent=nan bound=405.91 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID09 reference=832.79 incumbent=nan bound=374.51 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID10 reference=638.92 incumbent=nan bound=418.66 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID11 reference=787.43 incumbent=nan bound=424.26 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID12 reference=672.73 incumbent=nan bound=395.1 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID13 reference=710.74 incumbent=nan bound=425.5799999999999 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID14 reference=677.87 incumbent=nan bound=422.52500000000003 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID15 reference=652.01 incumbent=nan bound=410.825 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID16 reference=724.64 incumbent=nan bound=393.945 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID17 reference=823.49 incumbent=nan bound=449.06 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID18 reference=633.6 incumbent=nan bound=418.64 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID19 reference=750.38 incumbent=nan bound=420.84000000000003 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+SP_N25_rc_1_rGamma_1_dc_0.035_dGamma_0.0005_SP_N25_ID20 reference=618.22 incumbent=nan bound=366.40000000000003 status=TIME_LIMIT_NO_INCUMBENT tour_valid= check=NO_INCUMBENT
+Invalid results: 0

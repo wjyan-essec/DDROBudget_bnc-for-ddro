@@ -1,0 +1,2 @@
+N50_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_jeu_50_75_5 incumbent=-1602.06 reference=140.22 OK
+Invalid high incumbents: 0

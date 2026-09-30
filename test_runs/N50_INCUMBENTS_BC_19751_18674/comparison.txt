@@ -1,0 +1,4 @@
+N50_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_jeu_50_50_4 incumbent=162.81 reference=353.41 OK
+N50_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_jeu_50_75_1 incumbent=48.74 reference=126.78 OK
+N50_rc_0.7_rGamma_1_dc_0.035_dGamma_0.0005_jeu_50_75_5 incumbent=-1901.64 reference=140.22 OK
+Invalid high incumbents: 0
